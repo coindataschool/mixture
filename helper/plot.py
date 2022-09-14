@@ -150,7 +150,7 @@ def plot_simple_bars(x, y, title=None, xlabel=None, ylabel=None):
     ylabel: str
     """
     if xlabel is None:
-        xlabel = x.index.name
+        xlabel = x.name
     if ylabel is None:
         ylabel = y.name
     
