@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 import numpy as np
 
 plot_params = dict(
@@ -134,7 +135,8 @@ def plot_pred_singlestep(ytru, yhat_train, yhat_test,
     return ax
 
 
-def plot_simple_bars(x, y, title=None, xlabel=None, ylabel=None):
+def mk_barplot(x, y, title=None, xlabel=None, ylabel=None,
+               show_y_as_pct=True, y_pct_decimals=0):
     """
     Plot bar chart where bars below 0 are colored red and above are colored green.
 
@@ -144,10 +146,12 @@ def plot_simple_bars(x, y, title=None, xlabel=None, ylabel=None):
         Values on x-axis. 
     y: Series 
         Values on y-axis.
-    title: str 
-        Figure title.
-    xlabel: str 
-    ylabel: str
+    title, xlabel, ylabel: str 
+        Figure title, x-label and y-label.
+    show_y_as_pct: logical (default = True)
+        Format y-tick labels as %.
+    y_pct_decimals: int
+        How many decimal points to show when formatting y as %.
     """
     if xlabel is None:
         xlabel = x.name
@@ -158,5 +162,44 @@ def plot_simple_bars(x, y, title=None, xlabel=None, ylabel=None):
     ax.bar(x, y, color=(y > 0).map({True:'#008000', False:'#b22222'}), edgecolor='k')
     # ax.axhline(0, color='k', linestyle = 'dashed')
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    plt.xticks(np.arange(min(x), max(x)+1, 1))
+    if show_y_as_pct:
+        ax.yaxis.set_major_formatter(PercentFormatter(1, decimals=y_pct_decimals))
+        nticks = 8 
+        steps  = (max(y) - min(y)) / nticks
+        plt.yticks(np.arange(min(y), max(y)+steps, steps))
     return ax
+
+
+def mk_barploth(x, y, title=None, xlabel=None, ylabel=None,
+                show_x_as_pct=True, x_pct_decimals=0):
+    """
+    Plot horizontal bar chart where bars below 0 are colored red and above are colored green.
+
+    Parameters
+    ----------
+    x: Series
+        Values on x-axis. 
+    y: Series 
+        Values on y-axis.
+    title, xlabel, ylabel: str 
+        Figure title, x-label and y-label.
+    show_x_as_pct: logical (default = True)
+        Format x-tick labels as %.
+    x_pct_decimals: int
+        How many decimal points to show when formatting x as %.
+    """
+    if xlabel is None:
+        xlabel = x.name
+    if ylabel is None:
+        ylabel = y.name
+    
+    _, ax = plt.subplots(constrained_layout=True) 
+    ax.barh(y, x, color=(x > 0).map({True:'#008000', False:'#b22222'}), edgecolor='k')
+    # ax.axhline(0, color='k', linestyle = 'dashed')
+    ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    if show_x_as_pct:
+        ax.xaxis.set_major_formatter(PercentFormatter(1, decimals=x_pct_decimals))
+        nticks = 8 
+        steps  = (max(x) - min(x)) / nticks
+        plt.xticks(np.arange(min(x), max(x)+steps, steps))
+    return ax    
