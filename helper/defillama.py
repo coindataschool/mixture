@@ -18,7 +18,7 @@ class DefiLlama:
     def __init__(self):
         self.session = requests.Session()
 
-    def _tidy_frame(self, df):
+    def _tidy_frame_tvl(self, df):
         """Set `date` of input data frame as index and shorten TVL column name.
         
         Parameters
@@ -97,7 +97,7 @@ class DefiLlama:
         """
         resp = self._get('TVL', '/charts')
         df = pd.DataFrame(resp)
-        return self._tidy_frame(df)
+        return self._tidy_frame_tvl(df)
 
     def get_chain_hist_tvl(self, chain):
         """Get historical TVL of a chain.
@@ -113,7 +113,7 @@ class DefiLlama:
         """
         resp = self._get('TVL', f'/charts/{chain}')
         df = pd.DataFrame(resp)
-        return self._tidy_frame(df)
+        return self._tidy_frame_tvl(df)
         
     def get_protocols(self):
         """Get detailed information on all protocols. 
@@ -194,3 +194,80 @@ class DefiLlama:
             d1.pop('staking')
         chains = list(d1.keys())
         return {chain: self._tidy_frame(pd.DataFrame(dd['chainTvls'][chain]['tvl'])) for chain in chains}
+
+    def _tidy_frame_price(self, resp):
+        # convert json response to data frame
+        ha = pd.DataFrame([item.split(':') for item in resp['coins'].keys()])
+        ha.columns = ['chain', 'token_address']
+        df = ha.join(pd.DataFrame([v for k, v in resp['coins'].items()]))
+        # convert epoch timestamp to human-readable datetime
+        df['timestamp'] = df.timestamp.apply(
+            lambda x: dt.datetime.utcfromtimestamp(int(x)))
+        return df
+
+    def get_tokens_curr_prices(self, token_addrs_n_chains):
+        """Get current prices of tokens by contract address.
+
+        Parameters
+        ----------
+        token_addrs_n_chains : dictionary
+            Each key is a token address; each value is a chain where the token 
+            address resides. If getting price from coingecko, use token name as 
+            key and 'coingecko' as value. For example, 
+            {'0xdF574c24545E5FfEcb9a659c229253D4111d87e1':'ethereum',
+             'ethereum':'coingecko'}
+
+        Returns 
+        -------
+        data frame
+        """
+        ss = ','.join([v + ':' +k for k, v in token_addrs_n_chains.items()])
+        resp = self._get('COINS', f'/prices/current/{ss}')
+        df = self._tidy_frame_price(resp)
+        return df.loc[:, ['timestamp', 'symbol', 'price', 'confidence', 
+                          'chain', 'token_address', 'decimals']]
+
+    def get_tokens_hist_snapshot_prices(self, token_addrs_n_chains, timestamp):
+        """Get historical snapshot prices of tokens by contract address.
+
+        Parameters
+        ----------
+        token_addrs_n_chains : dictionary
+            Each key is a token address; each value is a chain where the token 
+            address resides. If getting price from coingecko, use token name as 
+            key and 'coingecko' as value. For example, 
+            {'0xdF574c24545E5FfEcb9a659c229253D4111d87e1':'ethereum',
+             'ethereum':'coingecko'}
+        timestamp : string
+            Human-readable timestamp, for example, '2021-09-25 00:27:53'
+
+        Returns 
+        -------
+        data frame
+        """
+        ss = ','.join([v + ':' +k for k, v in token_addrs_n_chains.items()])
+        unix_ts = pd.to_datetime(timestamp).value / 1e9
+        resp = self._get('COINS', f'/prices/historical/{unix_ts}/{ss}')
+        df = self._tidy_frame_price(resp)
+        return df.loc[:, ['timestamp', 'symbol', 'price', 'chain', 'token_address', 'decimals']]
+
+    def get_closest_block(self, chain, timestamp):
+        """Get the closest block to a timestamp.
+
+        Parameters
+        ----------
+        chain : string
+            Name of the chain.
+        timestamp : string
+            Human-readable timestamp, for example, '2021-09-25 00:27:53'.
+
+        Returns 
+        -------
+        data frame
+        """
+        unix_ts = pd.to_datetime(timestamp).value / 1e9
+        resp = self._get('COINS', f'/block/{chain}/{unix_ts}')
+        df = pd.DataFrame(resp, index=range(1))
+        df['timestamp'] = df.timestamp.apply(
+            lambda x: dt.datetime.utcfromtimestamp(int(x)))
+        return df
