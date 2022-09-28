@@ -360,7 +360,7 @@ class DefiLlama:
         Parameters
         ----------
         id : int 
-            Stablecoin ID, you can get these from get_stablecoins_circulating().
+            Stablecoin ID, you can get it from get_stablecoins_circulating().
             For example, USDT has id 1, USDC 2, Frax 6.
         chain : string
             Name of the chain where the stablecoin resides.
@@ -401,4 +401,42 @@ class DefiLlama:
         df = df.reset_index().rename(columns={'index':'stablecoin'})
         df['date'] = df.date.apply(lambda x: dt.datetime.utcfromtimestamp(int(x)))
         df = df.set_index('date')
+        return df
+
+    def get_pools_yields(self):
+        """Get the latest data for all pools, including enriched info such as 
+        predictions.
+
+        Returns 
+        -------
+        data frame
+        """
+        resp = self._get('YIELDS', f'/pools')
+        lst = resp['data']
+        df = pd.json_normalize(lst)
+        df.columns = df.columns.str.replace('predictions.', '', regex=False)
+        df['apyPct30D'] = df.apyPct30D.astype(float)
+        return df
+
+    def get_pool_hist_apy(self, pool_id):
+        """Get historical APY and TVL of a pool.
+
+        Parameters
+        ----------
+        pool_id : str 
+            Pool id, you can get it from the `pool` column after calling 
+            get_pools_yields().
+
+        Returns 
+        -------
+        data frame
+        """
+        resp = self._get('YIELDS', f'/chart/{pool_id}')
+        df = pd.DataFrame(resp['data'])
+        df['date'] = df.timestamp.apply(
+            lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%f%z').date())
+        df = df.drop(columns='timestamp')
+        df['apyReward'] = df.apyReward.astype(float)
+        df['apyBase'] = df.apyBase.astype(float)
+        df = df.groupby('date').mean()
         return df
