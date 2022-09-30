@@ -1,3 +1,6 @@
 fivethirtyeight_blue = '#008FD5'
 fivethirtyeight_green = '#77AB43'
 fivethirtyeight_red = '#FF2700'
+gmx_blue = '#000058'
+avax_red = '#DE4437'
+gns_green = '#3deca7'
