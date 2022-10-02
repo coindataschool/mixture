@@ -16,9 +16,9 @@ def human_format_dollar_or_num(dollar=False, decimals=0):
 
     Parameters
     ----------
-    dollar: logical
+    dollar : logical
         If True, will add $ in front of the numbers.
-    decimals: int
+    decimals : int
         Number of decimals to display.
     """
 
@@ -72,17 +72,17 @@ def plot_timeseries_with_trendline(ytru, yhat, title=None, xlabel=None,
 
     Parameters
     ----------
-    ytru: Series
+    ytru : Series
         Observed outcome.
-    yhat: Series 
+    yhat : Series 
         Predicted outcome.
-    title: str 
+    title : str 
         Figure title.
-    xlabel: str 
-    ylabel: str
-    ytru_legend: str 
+    xlabel : str 
+    ylabel : str
+    ytru_legend : str 
         Legend label for observed outcome.
-    yhat_legend: str 
+    yhat_legend : str 
         Legend label for predicted outcome.
     """
     if xlabel is None:
@@ -107,17 +107,17 @@ def plot_pred_singlestep(ytru, yhat_train, yhat_test,
 
     Parameters
     ----------
-    ytru: Series
+    ytru : Series
         Observed outcome. 
-    yhat_train: Series 
+    yhat_train : Series 
         Predicted outcome on training set.
-    yhat_test: Series 
+    yhat_test : Series 
         Predicted outcome on testing set.
-    title: str 
+    title : str 
         Figure title.
-    xlabel: str 
-    ylabel: str
-    ytru_legend: str 
+    xlabel : str 
+    ylabel : str
+    ytru_legend : str 
         Legend label for observed outcome.
     """
     if xlabel is None:
@@ -142,15 +142,15 @@ def mk_barplot(x, y, title=None, xlabel=None, ylabel=None,
 
     Parameters
     ----------
-    x: Series
+    x : Series
         Values on x-axis. 
-    y: Series 
+    y : Series 
         Values on y-axis.
-    title, xlabel, ylabel: str 
+    title, xlabel, ylabel : str 
         Figure title, x-label and y-label.
-    show_y_as_pct: logical (default = True)
+    show_y_as_pct : logical
         Format y-tick labels as %.
-    y_pct_decimals: int
+    y_pct_decimals : int
         How many decimal points to show when formatting y as %.
     """
     if xlabel is None:
@@ -177,15 +177,15 @@ def mk_barploth(x, y, title=None, xlabel=None, ylabel=None,
 
     Parameters
     ----------
-    x: Series
+    x : Series
         Values on x-axis. 
-    y: Series 
+    y : Series 
         Values on y-axis.
-    title, xlabel, ylabel: str 
+    title, xlabel, ylabel : str 
         Figure title, x-label and y-label.
-    show_x_as_pct: logical (default = True)
+    show_x_as_pct : logical 
         Format x-tick labels as %.
-    x_pct_decimals: int
+    x_pct_decimals : int
         How many decimal points to show when formatting x as %.
     """
     if xlabel is None:
@@ -202,4 +202,36 @@ def mk_barploth(x, y, title=None, xlabel=None, ylabel=None,
         nticks = 8 
         steps  = (max(x) - min(x)) / nticks
         plt.xticks(np.arange(min(x), max(x)+steps, steps))
-    return ax    
+    return ax
+
+
+def mk_histogram(x, nbins=50, title=None, xlabel=None, ylabel='Frequency', 
+                 show_x_as_pct=False, x_pct_decimals=0, xticks=8):
+    """
+    Plot histogram to show the distribution of a continuous variable.
+
+    Parameters
+    ----------
+    x : Series, list, or numpy array
+        Values on x-axis. 
+    nbins : int
+        Number of bins (default = 50).
+    title, xlabel, ylabel : str 
+        Figure title (default is None), x-label (default is None), and y-label (default = 'Frequency').
+    show_x_as_pct : logical 
+        Format x-tick labels as % or not. Default is False.
+    x_pct_decimals : int
+        How many decimal points (default = 0) to show when formatting x as %. 
+    xticks : int 
+        Number of ticks (default = 8) on x-tick. 
+    """
+    if xlabel is None:
+        xlabel = x.name
+    
+    _, ax = plt.subplots(constrained_layout=True) 
+    ax.hist(x, bins=nbins)
+    ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    if show_x_as_pct:
+        ax.xaxis.set_major_formatter(PercentFormatter(1, decimals=x_pct_decimals))
+    steps  = (max(x) - min(x)) / xticks
+    plt.xticks(np.arange(min(x), max(x)+steps, steps))        
